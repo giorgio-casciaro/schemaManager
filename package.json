@@ -1,14 +1,17 @@
 {
-  "name": "schemaManager",
+  "name": "sint-bit-schema-manager",
   "version": "1.0.0",
   "description": "schemaManager",
   "author": "Giorgio Casciaro <giorgio.casciaro@gmail.com>",
   "main": "schemaManager.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/giorgio-casciaro/schemaManager.git"
+  },
   "scripts": {
     "watch_test_single": "nodemon --ext js ./test/tests.js",
-    "watch_test_b": "nodemon  --ext js --exec \"clear && printf '\\e[3J' && tap testServicesNet/base.test.js --cov --color --reporter=spec || true\"",
     "watch_test": "nodemon  --ext js --exec \"clear && printf '\\e[3J' && tap tests/*.test.js --cov --color --reporter=spec || true\"",
-    "watch_debug_b": "nodemon  --ext js  --cov --exec \"clear && printf '\\e[3J' && node --inspect   testServicesNet/base.test.js || true\"",
+    "watch_debug": "nodemon  --ext js  --cov --exec \"clear && printf '\\e[3J' && node --inspect   tests/base.test.js || true\""
   },
   "devDependencies": {
     "babel-plugin-syntax-async-functions": "^6.13.0",
@@ -19,8 +22,10 @@
     "tap": "^10.3.1"
   },
   "dependencies": {
+    "ajv": "^4.11.6",
     "babel-polyfill": "^6.23.0",
     "json-schema-deref-sync": "^0.3.3",
+    "jsonfile": "^2.4.0",
     "ramda": "^0.23.0"
   }
 }
