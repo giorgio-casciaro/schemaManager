@@ -1,6 +1,6 @@
 {
   "name": "sint-bit-schema-manager",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "schemaManager",
   "author": "Giorgio Casciaro <giorgio.casciaro@gmail.com>",
   "main": "schemaManager.js",
