@@ -1,61 +1,38 @@
-'use strict';
+const fs = require('fs')
+const path = require('path')
+const checkRequired = require('./utils').checkRequired
+const getConsole = (serviceName, serviceId, pack) => require('./utils').getConsole({error: true, debug: true, log: true, warn: true}, serviceName, serviceId, pack)
+var PACKAGE = 'schemaManager'
+var CONSOLE = getConsole(PACKAGE, '----', '-----')
 
-var fs = require('fs');
-var path = require('path');
-var checkRequired = require('./utils').checkRequired;
-var getConsole = function getConsole(serviceName, serviceId, pack) {
-  return require('./utils').getConsole({ error: true, debug: true, log: true, warn: true }, serviceName, serviceId, pack);
-};
-var PACKAGE = 'schemaManager';
-var CONSOLE = getConsole(PACKAGE, '----', '-----');
+var SCHEMA = {}
 
-var SCHEMA = {};
-
-module.exports = function getSchemaManager(_ref) {
-  var updateSchema = _ref.updateSchema,
-      savePath = _ref.savePath,
-      serviceName = _ref.serviceName,
-      _ref$intervall = _ref.intervall,
-      intervall = _ref$intervall === undefined ? 5000 : _ref$intervall,
-      _ref$defaultField = _ref.defaultField,
-      defaultField = _ref$defaultField === undefined ? 'methods' : _ref$defaultField;
-
-  checkRequired({ updateSchema: updateSchema, savePath: savePath, serviceName: serviceName }, PACKAGE);
-  var updateServiceSchema = function updateServiceSchema() {
-    var serviceSchema = JSON.stringify(updateSchema());
+module.exports = function getSchemaManager ({updateSchema, savePath, serviceName, intervall = 5000, defaultField = 'methods'}) {
+  checkRequired({updateSchema, savePath, serviceName}, PACKAGE)
+  var updateServiceSchema = () => {
+    var serviceSchema = JSON.stringify(updateSchema())
     if (serviceSchema != JSON.stringify(SCHEMA[serviceName])) {
-      CONSOLE.log('SAVING TO FILE', serviceName + '.json');
-      fs.writeFileSync(path.join(savePath, serviceName + '.json'), serviceSchema, 'utf-8');
+      CONSOLE.log('SAVING TO FILE', serviceName + '.json')
+      fs.writeFileSync(path.join(savePath, serviceName + '.json'), serviceSchema, 'utf-8')
     }
-  };
-  var schemaInterval = setInterval(updateServiceSchema, intervall);
-  var readServicesSchema = function readServicesSchema() {
-    fs.readdirSync(savePath).forEach(function (file) {
-      if (file.indexOf('.json')) SCHEMA[file.replace('.json', '')] = JSON.parse(fs.readFileSync(path.join(savePath, file), 'utf-8'));
-    });
-  };
-  setInterval(readServicesSchema, intervall);
-  updateServiceSchema();
-  readServicesSchema();
+  }
+  var schemaInterval = setInterval(updateServiceSchema, intervall)
+  var readServicesSchema = () => {
+    fs.readdirSync(savePath).forEach(file => {
+      if (file.indexOf('.json'))SCHEMA[file.replace('.json', '')] = JSON.parse(fs.readFileSync(path.join(savePath, file), 'utf-8'))
+    })
+  }
+  setInterval(readServicesSchema, intervall)
+  updateServiceSchema()
+  readServicesSchema()
   return {
-    get: function get() {
-      var field = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultField;
-      var service = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : serviceName;
-      var exclude = arguments[2];
-
-      if (service === '*') return Object.keys(SCHEMA).filter(function (serviceName) {
-        return serviceName !== exclude;
-      }).map(function (serviceName) {
-        return { items: SCHEMA[serviceName][field], service: serviceName };
-      });else return SCHEMA[service][field];
+    get (field = defaultField, service = serviceName, exclude) {
+      if (service === '*') return Object.keys(SCHEMA).filter((serviceName) => serviceName !== exclude).map((serviceName) => { return {items: SCHEMA[serviceName][field], service: serviceName} })
+      else return SCHEMA[service][field]
     },
-    stop: function stop() {
-      clearInterval(schemaInterval);
+    stop () {
+      clearInterval(schemaInterval)
     },
-
-    getSchema: function getSchema() {
-      return SCHEMA;
-    }
-  };
-};
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInNjaGVtYU1hbmFnZXIuZXM2Il0sIm5hbWVzIjpbImZzIiwicmVxdWlyZSIsInBhdGgiLCJjaGVja1JlcXVpcmVkIiwiZ2V0Q29uc29sZSIsInNlcnZpY2VOYW1lIiwic2VydmljZUlkIiwicGFjayIsImVycm9yIiwiZGVidWciLCJsb2ciLCJ3YXJuIiwiUEFDS0FHRSIsIkNPTlNPTEUiLCJTQ0hFTUEiLCJtb2R1bGUiLCJleHBvcnRzIiwiZ2V0U2NoZW1hTWFuYWdlciIsInVwZGF0ZVNjaGVtYSIsInNhdmVQYXRoIiwiaW50ZXJ2YWxsIiwiZGVmYXVsdEZpZWxkIiwidXBkYXRlU2VydmljZVNjaGVtYSIsInNlcnZpY2VTY2hlbWEiLCJKU09OIiwic3RyaW5naWZ5Iiwid3JpdGVGaWxlU3luYyIsImpvaW4iLCJzY2hlbWFJbnRlcnZhbCIsInNldEludGVydmFsIiwicmVhZFNlcnZpY2VzU2NoZW1hIiwicmVhZGRpclN5bmMiLCJmb3JFYWNoIiwiZmlsZSIsImluZGV4T2YiLCJyZXBsYWNlIiwicGFyc2UiLCJyZWFkRmlsZVN5bmMiLCJnZXQiLCJmaWVsZCIsInNlcnZpY2UiLCJleGNsdWRlIiwiT2JqZWN0Iiwia2V5cyIsImZpbHRlciIsIm1hcCIsIml0ZW1zIiwic3RvcCIsImNsZWFySW50ZXJ2YWwiLCJnZXRTY2hlbWEiXSwibWFwcGluZ3MiOiI7O0FBQUEsSUFBTUEsS0FBS0MsUUFBUSxJQUFSLENBQVg7QUFDQSxJQUFNQyxPQUFPRCxRQUFRLE1BQVIsQ0FBYjtBQUNBLElBQU1FLGdCQUFnQkYsUUFBUSxTQUFSLEVBQW1CRSxhQUF6QztBQUNBLElBQU1DLGFBQWEsU0FBYkEsVUFBYSxDQUFDQyxXQUFELEVBQWNDLFNBQWQsRUFBeUJDLElBQXpCO0FBQUEsU0FBa0NOLFFBQVEsU0FBUixFQUFtQkcsVUFBbkIsQ0FBOEIsRUFBQ0ksT0FBTyxJQUFSLEVBQWNDLE9BQU8sSUFBckIsRUFBMkJDLEtBQUssSUFBaEMsRUFBc0NDLE1BQU0sSUFBNUMsRUFBOUIsRUFBaUZOLFdBQWpGLEVBQThGQyxTQUE5RixFQUF5R0MsSUFBekcsQ0FBbEM7QUFBQSxDQUFuQjtBQUNBLElBQUlLLFVBQVUsZUFBZDtBQUNBLElBQUlDLFVBQVVULFdBQVdRLE9BQVgsRUFBb0IsTUFBcEIsRUFBNEIsT0FBNUIsQ0FBZDs7QUFFQSxJQUFJRSxTQUFTLEVBQWI7O0FBRUFDLE9BQU9DLE9BQVAsR0FBaUIsU0FBU0MsZ0JBQVQsT0FBOEc7QUFBQSxNQUFsRkMsWUFBa0YsUUFBbEZBLFlBQWtGO0FBQUEsTUFBcEVDLFFBQW9FLFFBQXBFQSxRQUFvRTtBQUFBLE1BQTFEZCxXQUEwRCxRQUExREEsV0FBMEQ7QUFBQSw0QkFBN0NlLFNBQTZDO0FBQUEsTUFBN0NBLFNBQTZDLGtDQUFqQyxJQUFpQztBQUFBLCtCQUEzQkMsWUFBMkI7QUFBQSxNQUEzQkEsWUFBMkIscUNBQVosU0FBWTs7QUFDN0hsQixnQkFBYyxFQUFDZSwwQkFBRCxFQUFlQyxrQkFBZixFQUF5QmQsd0JBQXpCLEVBQWQsRUFBcURPLE9BQXJEO0FBQ0EsTUFBSVUsc0JBQXNCLFNBQXRCQSxtQkFBc0IsR0FBTTtBQUM5QixRQUFJQyxnQkFBZ0JDLEtBQUtDLFNBQUwsQ0FBZVAsY0FBZixDQUFwQjtBQUNBLFFBQUlLLGlCQUFpQkMsS0FBS0MsU0FBTCxDQUFlWCxPQUFPVCxXQUFQLENBQWYsQ0FBckIsRUFBMEQ7QUFDeERRLGNBQVFILEdBQVIsQ0FBWSxnQkFBWixFQUE4QkwsY0FBYyxPQUE1QztBQUNBTCxTQUFHMEIsYUFBSCxDQUFpQnhCLEtBQUt5QixJQUFMLENBQVVSLFFBQVYsRUFBb0JkLGNBQWMsT0FBbEMsQ0FBakIsRUFBNkRrQixhQUE3RCxFQUE0RSxPQUE1RTtBQUNEO0FBQ0YsR0FORDtBQU9BLE1BQUlLLGlCQUFpQkMsWUFBWVAsbUJBQVosRUFBaUNGLFNBQWpDLENBQXJCO0FBQ0EsTUFBSVUscUJBQXFCLFNBQXJCQSxrQkFBcUIsR0FBTTtBQUM3QjlCLE9BQUcrQixXQUFILENBQWVaLFFBQWYsRUFBeUJhLE9BQXpCLENBQWlDLGdCQUFRO0FBQ3ZDLFVBQUlDLEtBQUtDLE9BQUwsQ0FBYSxPQUFiLENBQUosRUFBMEJwQixPQUFPbUIsS0FBS0UsT0FBTCxDQUFhLE9BQWIsRUFBc0IsRUFBdEIsQ0FBUCxJQUFvQ1gsS0FBS1ksS0FBTCxDQUFXcEMsR0FBR3FDLFlBQUgsQ0FBZ0JuQyxLQUFLeUIsSUFBTCxDQUFVUixRQUFWLEVBQW9CYyxJQUFwQixDQUFoQixFQUEyQyxPQUEzQyxDQUFYLENBQXBDO0FBQzNCLEtBRkQ7QUFHRCxHQUpEO0FBS0FKLGNBQVlDLGtCQUFaLEVBQWdDVixTQUFoQztBQUNBRTtBQUNBUTtBQUNBLFNBQU87QUFDTFEsT0FESyxpQkFDc0Q7QUFBQSxVQUF0REMsS0FBc0QsdUVBQTlDbEIsWUFBOEM7QUFBQSxVQUFoQ21CLE9BQWdDLHVFQUF0Qm5DLFdBQXNCO0FBQUEsVUFBVG9DLE9BQVM7O0FBQ3pELFVBQUlELFlBQVksR0FBaEIsRUFBcUIsT0FBT0UsT0FBT0MsSUFBUCxDQUFZN0IsTUFBWixFQUFvQjhCLE1BQXBCLENBQTJCLFVBQUN2QyxXQUFEO0FBQUEsZUFBaUJBLGdCQUFnQm9DLE9BQWpDO0FBQUEsT0FBM0IsRUFBcUVJLEdBQXJFLENBQXlFLFVBQUN4QyxXQUFELEVBQWlCO0FBQUUsZUFBTyxFQUFDeUMsT0FBT2hDLE9BQU9ULFdBQVAsRUFBb0JrQyxLQUFwQixDQUFSLEVBQW9DQyxTQUFTbkMsV0FBN0MsRUFBUDtBQUFrRSxPQUE5SixDQUFQLENBQXJCLEtBQ0ssT0FBT1MsT0FBTzBCLE9BQVAsRUFBZ0JELEtBQWhCLENBQVA7QUFDTixLQUpJO0FBS0xRLFFBTEssa0JBS0c7QUFDTkMsb0JBQWNwQixjQUFkO0FBQ0QsS0FQSTs7QUFRTHFCLGVBQVc7QUFBQSxhQUFNbkMsTUFBTjtBQUFBO0FBUk4sR0FBUDtBQVVELENBNUJEIiwiZmlsZSI6InNjaGVtYU1hbmFnZXIuZXM2Iiwic291cmNlc0NvbnRlbnQiOlsiY29uc3QgZnMgPSByZXF1aXJlKCdmcycpXG5jb25zdCBwYXRoID0gcmVxdWlyZSgncGF0aCcpXG5jb25zdCBjaGVja1JlcXVpcmVkID0gcmVxdWlyZSgnLi91dGlscycpLmNoZWNrUmVxdWlyZWRcbmNvbnN0IGdldENvbnNvbGUgPSAoc2VydmljZU5hbWUsIHNlcnZpY2VJZCwgcGFjaykgPT4gcmVxdWlyZSgnLi91dGlscycpLmdldENvbnNvbGUoe2Vycm9yOiB0cnVlLCBkZWJ1ZzogdHJ1ZSwgbG9nOiB0cnVlLCB3YXJuOiB0cnVlfSwgc2VydmljZU5hbWUsIHNlcnZpY2VJZCwgcGFjaylcbnZhciBQQUNLQUdFID0gJ3NjaGVtYU1hbmFnZXInXG52YXIgQ09OU09MRSA9IGdldENvbnNvbGUoUEFDS0FHRSwgJy0tLS0nLCAnLS0tLS0nKVxuXG52YXIgU0NIRU1BID0ge31cblxubW9kdWxlLmV4cG9ydHMgPSBmdW5jdGlvbiBnZXRTY2hlbWFNYW5hZ2VyICh7dXBkYXRlU2NoZW1hLCBzYXZlUGF0aCwgc2VydmljZU5hbWUsIGludGVydmFsbCA9IDUwMDAsIGRlZmF1bHRGaWVsZCA9ICdtZXRob2RzJ30pIHtcbiAgY2hlY2tSZXF1aXJlZCh7dXBkYXRlU2NoZW1hLCBzYXZlUGF0aCwgc2VydmljZU5hbWV9LCBQQUNLQUdFKVxuICB2YXIgdXBkYXRlU2VydmljZVNjaGVtYSA9ICgpID0+IHtcbiAgICB2YXIgc2VydmljZVNjaGVtYSA9IEpTT04uc3RyaW5naWZ5KHVwZGF0ZVNjaGVtYSgpKVxuICAgIGlmIChzZXJ2aWNlU2NoZW1hICE9IEpTT04uc3RyaW5naWZ5KFNDSEVNQVtzZXJ2aWNlTmFtZV0pKSB7XG4gICAgICBDT05TT0xFLmxvZygnU0FWSU5HIFRPIEZJTEUnLCBzZXJ2aWNlTmFtZSArICcuanNvbicpXG4gICAgICBmcy53cml0ZUZpbGVTeW5jKHBhdGguam9pbihzYXZlUGF0aCwgc2VydmljZU5hbWUgKyAnLmpzb24nKSwgc2VydmljZVNjaGVtYSwgJ3V0Zi04JylcbiAgICB9XG4gIH1cbiAgdmFyIHNjaGVtYUludGVydmFsID0gc2V0SW50ZXJ2YWwodXBkYXRlU2VydmljZVNjaGVtYSwgaW50ZXJ2YWxsKVxuICB2YXIgcmVhZFNlcnZpY2VzU2NoZW1hID0gKCkgPT4ge1xuICAgIGZzLnJlYWRkaXJTeW5jKHNhdmVQYXRoKS5mb3JFYWNoKGZpbGUgPT4ge1xuICAgICAgaWYgKGZpbGUuaW5kZXhPZignLmpzb24nKSlTQ0hFTUFbZmlsZS5yZXBsYWNlKCcuanNvbicsICcnKV0gPSBKU09OLnBhcnNlKGZzLnJlYWRGaWxlU3luYyhwYXRoLmpvaW4oc2F2ZVBhdGgsIGZpbGUpLCAndXRmLTgnKSlcbiAgICB9KVxuICB9XG4gIHNldEludGVydmFsKHJlYWRTZXJ2aWNlc1NjaGVtYSwgaW50ZXJ2YWxsKVxuICB1cGRhdGVTZXJ2aWNlU2NoZW1hKClcbiAgcmVhZFNlcnZpY2VzU2NoZW1hKClcbiAgcmV0dXJuIHtcbiAgICBnZXQgKGZpZWxkID0gZGVmYXVsdEZpZWxkLCBzZXJ2aWNlID0gc2VydmljZU5hbWUsIGV4Y2x1ZGUpIHtcbiAgICAgIGlmIChzZXJ2aWNlID09PSAnKicpIHJldHVybiBPYmplY3Qua2V5cyhTQ0hFTUEpLmZpbHRlcigoc2VydmljZU5hbWUpID0+IHNlcnZpY2VOYW1lICE9PSBleGNsdWRlKS5tYXAoKHNlcnZpY2VOYW1lKSA9PiB7IHJldHVybiB7aXRlbXM6IFNDSEVNQVtzZXJ2aWNlTmFtZV1bZmllbGRdLCBzZXJ2aWNlOiBzZXJ2aWNlTmFtZX0gfSlcbiAgICAgIGVsc2UgcmV0dXJuIFNDSEVNQVtzZXJ2aWNlXVtmaWVsZF1cbiAgICB9LFxuICAgIHN0b3AgKCkge1xuICAgICAgY2xlYXJJbnRlcnZhbChzY2hlbWFJbnRlcnZhbClcbiAgICB9LFxuICAgIGdldFNjaGVtYTogKCkgPT4gU0NIRU1BXG4gIH1cbn1cbiJdfQ==
+    getSchema: () => SCHEMA
+  }
+}
