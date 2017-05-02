@@ -27,8 +27,10 @@ module.exports = function getSchemaManager ({updateSchema, savePath, serviceName
   readServicesSchema()
   return {
     get (field = defaultField, service = serviceName, exclude) {
+      CONSOLE.debug('get', {field, service, exclude, schema: SCHEMA[service]})
       if (service === '*') return Object.keys(SCHEMA).filter((serviceName) => serviceName !== exclude).map((serviceName) => { return {items: SCHEMA[serviceName][field], service: serviceName} })
-      else return SCHEMA[service][field]
+      if (!SCHEMA[service][field]) throw new Error(`SchemaManager get, service '${service}', field '${field}' not exists`)
+      return SCHEMA[service][field]
     },
     stop () {
       clearInterval(schemaInterval)
